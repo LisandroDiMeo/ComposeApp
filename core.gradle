@@ -1,0 +1,55 @@
+android {
+    compileSdk config.targetSdk
+    defaultConfig {
+        minSdk config.minSdk
+        targetSdk config.targetSdk
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            testCoverageEnabled false // Why I can still generate testCoverage even when its disabled? wtf
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion library.composeCompiler
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+        freeCompilerArgs += [
+                "-Xjvm-default=all",
+        ]
+    }
+
+    packagingOptions {
+        resources {
+            excludes += 'META-INF/LICENSE*'
+            excludes += 'META-INF/LICENSE.md'
+            excludes += 'META-INF/LICENSE.md/*'
+            excludes += 'META-INF/LICENSE-notice.md'
+            excludes += 'META-INF/properties'
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            excludes += '/META-INF/*'
+        }
+    }
+}
