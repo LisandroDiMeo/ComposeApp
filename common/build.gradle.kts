@@ -36,6 +36,7 @@ dependencies {
     api("androidx.compose.runtime:runtime")
     api("androidx.compose.runtime:runtime-livedata")
     api("androidx.lifecycle:lifecycle-viewmodel-compose")
+    api("androidx.navigation:navigation-compose:${library["navigation"]}")
     api("com.google.android.material:material:${library["android-material"]}")
 
     api("com.squareup.moshi:moshi:${library["moshi"]}")

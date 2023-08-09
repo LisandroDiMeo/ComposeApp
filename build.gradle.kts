@@ -11,7 +11,7 @@ plugins {
 
     id("com.android.application") version "8.0.2" apply false
     id("com.android.library") version "8.0.2" apply false
-    id("org.jetbrains.kotlin.android") version "1.7.20" apply false
+    id("org.jetbrains.kotlin.android") version "1.8.0" apply false
     id("jacoco")
 }
 
@@ -50,6 +50,7 @@ allprojects {
         library["compose-bom"] = "2022.10.00"
         library["lifecycle-common"] = "2.6.1"
         library["workX"] = "2.8.1"
+        library["navigation"] = "2.5.1"
 
         // Coil Compose
         library["coil"] = "2.4.0"
