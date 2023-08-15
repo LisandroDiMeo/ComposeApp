@@ -3,17 +3,19 @@ package com.example.exampleapplication.presentation.fragments.rotation
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
@@ -27,6 +29,7 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -38,7 +41,11 @@ fun ImageRotation(
         Log.i("IMAGE_ROTATE", it.toString())
     }
 ) {
-    val goniometerBgColor = Color(0x4a00FFFF)
+    val goniometerBgColorStart = Color(0x4a0A1821)
+    val goniometerBgColorEnd = Color(0xff4A8492)
+    val goniometerBrush = Brush.horizontalGradient(
+        listOf(goniometerBgColorStart, goniometerBgColorEnd)
+    )
     val textMeasurer = rememberTextMeasurer()
     var circleRadius by remember { mutableStateOf(1f) }
     var circleCenter by remember { mutableStateOf(Offset.Zero) }
@@ -46,6 +53,7 @@ fun ImageRotation(
     var shouldAcceptDrag by remember { mutableStateOf(false) }
     var rotationAngle by remember { mutableStateOf(0f) }
     var oldAngle by remember { mutableStateOf(rotationAngle) }
+
     LaunchedEffect(rotationAngle) {
         onAngleChanged(rotationAngle)
     }
@@ -67,11 +75,11 @@ fun ImageRotation(
                         ) * (180f / Math.PI.toFloat()) * -1
                     },
                     onDragEnd = {
-                        if(shouldAcceptDrag)
+                        if (shouldAcceptDrag)
                             oldAngle = rotationAngle
                     },
                     onDrag = { change, _ ->
-                        if(shouldAcceptDrag) {
+                        if (shouldAcceptDrag) {
                             val touchAngle = atan2(
                                 y = size.center.x - change.position.x,
                                 x = size.center.y - change.position.y
@@ -93,7 +101,7 @@ fun ImageRotation(
         circleRadius = goniometerRadius
         circleCenter = size.center
         drawCircle(
-            color = goniometerBgColor,
+            goniometerBrush,
             radius = goniometerRadius,
             center = size.center
         )
@@ -150,7 +158,7 @@ fun ImageRotation(
                         topLeft = textOffset
                     )
                 }
-                
+
                 for (subMarker in 1..subAnglesSeparators) {
                     val subAngleInDegrees = angleInDegrees + subAngleUnit * subMarker
                     val subStartOffset = Offset(
@@ -182,6 +190,20 @@ fun ImageRotation(
 
     }
 
+}
+
+@Preview(device = Devices.NEXUS_5X)
+@Composable
+fun RotationPreview() {
+    var angle by remember { mutableStateOf("") }
+    Column(Modifier.fillMaxSize()) {
+        Text(angle)
+        ImageRotation {
+            val absoluteAngle = (270 - it.roundToInt()) % 360
+            val finalAngle = if (absoluteAngle < 0) (absoluteAngle + 360) % 360 else absoluteAngle
+            angle = finalAngle.toString() + "º (${it.roundToInt()})"
+        }
+    }
 }
 
 private fun isOnCircle(circleCenter: Offset, point: Offset, radius: Float): Boolean {
