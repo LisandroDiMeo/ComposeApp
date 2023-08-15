@@ -1,23 +1,22 @@
 package com.example.exampleapplication.presentation.fragments.login
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.exampleapplication.domain.login.FailedLogIn
-import com.example.exampleapplication.domain.login.LogInState
-import com.example.exampleapplication.domain.login.SuccessLogIn
+import com.example.exampleapplication.domain.login.model.LogInState
+import com.example.exampleapplication.domain.login.usecase.ConcreteLogInUseCase
+import com.example.exampleapplication.domain.login.usecase.LogInUseCase
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.junit.internal.runners.statements.Fail
-import kotlin.random.Random
 
-class LogInViewModel : ViewModel() {
+class LogInViewModel(
+    private val logInUseCase: LogInUseCase = ConcreteLogInUseCase(),
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
     private val _username: MutableStateFlow<String> = MutableStateFlow("")
     val username: StateFlow<String> = _username.asStateFlow()
 
@@ -51,19 +50,22 @@ class LogInViewModel : ViewModel() {
     private fun validatePassword() = password.value.trim().length >= 8
 
     fun logIn() {
+        if (!logInAvailable.value || logInJob?.isActive == true)
+            throw IllegalStateException(ILLEGAL_LOGIN)
         logInJob?.cancel()
         _logInAvailable.value = false
-        logInJob = viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                delay(3000L)
-                if (username.value == "Lisandroid" && password.value == "12345678") {
-                    _credentialsResult.value = SuccessLogIn()
-                } else {
-                    _credentialsResult.value = FailedLogIn()
+        logInJob = viewModelScope.launch(dispatcher) {
+            logInUseCase
+                .logInWithCredentials(username.value, password.value)
+                .collect {
+                    _credentialsResult.value = it
+                    _logInAvailable.value = true
                 }
-                _logInAvailable.value = true
-            }
         }
+    }
+
+    companion object {
+        const val ILLEGAL_LOGIN = "Its prohibited to perform log in with current set of credentials"
     }
 
 }

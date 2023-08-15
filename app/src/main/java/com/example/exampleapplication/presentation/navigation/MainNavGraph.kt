@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,7 +26,7 @@ fun MainNavGraph() {
     val mainNavViewModel = viewModel(
         modelClass = MainNavigationViewModel::class.java,
     )
-    mainNavViewModel.screen.collectAsState().value?.let { screenUi ->
+    mainNavViewModel.screen.collectAsStateWithLifecycle().value?.let { screenUi ->
         TopBar(
             title = screenUi.topBarTitle,
             actions = screenUi.topAppBarActions,
@@ -43,7 +44,7 @@ fun MainNavGraph() {
                 LogInScreenModel(
                     LogInScreenActions(
                         onInformationClicked = {}, onSettingsClicked = {},
-                        onFailedLogIn = {
+                        onIncorrectCredentials = {
                             navController.navigate(MainNavRoutes.LogInRoutes.RememberCredentials)
                         },
                         onSuccessLogIn = {

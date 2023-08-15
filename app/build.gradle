@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
 }
 
 apply from: '../core.gradle'
@@ -32,7 +33,7 @@ android {
 }
 
 dependencies {
-
+    kapt "com.squareup.moshi:moshi-kotlin-codegen:1.14.0"
     implementation project(':common')
     implementation project(':test')
     debugImplementation 'androidx.compose.ui:ui-tooling'

@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Preview(device = Devices.NEXUS_5X, showSystemUi = true)
@@ -32,10 +33,10 @@ fun LogInScreen(
     val viewModel = viewModel(
         modelClass = LogInViewModel::class.java
     )
-    val username = viewModel.username.collectAsState().value
-    val password = viewModel.password.collectAsState().value
+    val username = viewModel.username.collectAsStateWithLifecycle().value
+    val password = viewModel.password.collectAsStateWithLifecycle().value
 
-    val loginState = viewModel.credentialsResult.collectAsState().value
+    val loginState = viewModel.credentialsResult.collectAsStateWithLifecycle().value
 
     LaunchedEffect(loginState) {
         loginState?.accept(logInScreenModel)
@@ -72,7 +73,7 @@ fun LogInScreen(
         Button(
             onClick = { viewModel.logIn() },
             modifier = Modifier,
-            enabled = viewModel.logInAvailable.collectAsState().value,
+            enabled = viewModel.logInAvailable.collectAsStateWithLifecycle().value,
             contentPadding = PaddingValues(horizontal = 32.dp, vertical = 18.dp),
         ) {
             Icon(imageVector = Icons.Filled.Star, null)

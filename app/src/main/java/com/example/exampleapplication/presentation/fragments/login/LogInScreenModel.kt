@@ -14,7 +14,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import com.example.common.ui.topappbar.TopAppBarAction
 import com.example.common.ui.topappbar.ScreenModel
-import com.example.exampleapplication.domain.login.SuccessLogIn
 
 class LogInScreenModel(
     private val actions: LogInScreenActions,
@@ -54,8 +53,12 @@ class LogInScreenModel(
         actions.onSuccessLogIn()
     }
 
-    fun failureLogin() {
-        actions.onFailedLogIn()
+    fun incorrectCredentials() {
+        actions.onIncorrectCredentials()
+    }
+
+    fun failedLogIn() {
+        actions.onFailedLogIn
     }
 
 }
@@ -64,5 +67,6 @@ data class LogInScreenActions(
     val onInformationClicked: () -> Unit = {},
     val onSettingsClicked: () -> Unit = {},
     val onSuccessLogIn: () -> Unit = {},
+    val onIncorrectCredentials: () -> Unit = {},
     val onFailedLogIn: () -> Unit = {}
 )

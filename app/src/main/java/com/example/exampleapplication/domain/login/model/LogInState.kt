@@ -1,4 +1,4 @@
-package com.example.exampleapplication.domain.login
+package com.example.exampleapplication.domain.login.model
 
 import com.example.exampleapplication.presentation.fragments.login.LogInScreenModel
 

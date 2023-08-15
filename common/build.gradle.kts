@@ -38,6 +38,7 @@ dependencies {
     api("androidx.lifecycle:lifecycle-viewmodel-compose")
     api("androidx.navigation:navigation-compose:${library["navigation"]}")
     api("com.google.android.material:material:${library["android-material"]}")
+    api("androidx.lifecycle:lifecycle-runtime-compose")
 
     api("com.squareup.moshi:moshi:${library["moshi"]}")
     api("com.squareup.retrofit2:retrofit:${library["retrofit"]}")

@@ -18,24 +18,26 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
+            buildConfigField "String", "API_URL", "\"http://192.168.0.119:1234\""
             testCoverageEnabled false // TODO: FIX, This will generate some issues with instrumentedCoverage.
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+//        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     buildFeatures {
         compose true
+        buildConfig true
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.4.1'
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
         freeCompilerArgs += [
                 "-Xjvm-default=all",
         ]
