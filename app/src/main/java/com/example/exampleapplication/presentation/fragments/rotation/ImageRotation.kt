@@ -7,18 +7,30 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
@@ -52,6 +64,8 @@ import kotlin.math.sqrt
 @Preview(device = Devices.PIXEL_3A)
 @Composable
 fun ImageRotation(
+    isVisible: Boolean = true,
+    onCrossPressed: () -> Unit = {},
     onAngleChanged: (Float) -> Unit = {
         Log.i("IMAGE_ROTATE", it.toString())
     }
@@ -65,6 +79,7 @@ fun ImageRotation(
     var circleRadius by remember { mutableStateOf(1f) }
     var crossRadius by remember { mutableStateOf(1f) }
     var circleCenter by remember { mutableStateOf(Offset.Zero) }
+    var crossCenter by remember { mutableStateOf(Offset.Zero) }
     var dragStartedAngle by remember { mutableStateOf(0f) }
     var shouldAcceptDrag by remember { mutableStateOf(false) }
     var rotationAngle by remember { mutableStateOf(0f) }
@@ -96,7 +111,7 @@ fun ImageRotation(
         }
     }
 
-    var isVisible by remember { mutableStateOf(true) }
+//    var isVisible by remember { mutableStateOf(true) }
 
     AnimatedVisibility(
         visible = isVisible,
@@ -108,8 +123,8 @@ fun ImageRotation(
                 .size(512.dp)
                 .pointerInput(true) {
                     detectTapGestures(onPress = { offset ->
-                        if (isOnCircle(circleCenter, offset, crossRadius)) {
-                            isVisible = false
+                        if (isOnCircle(crossCenter, offset, crossRadius)) {
+                            onCrossPressed()
                         }
                     })
                 }
@@ -129,7 +144,7 @@ fun ImageRotation(
                         },
                         onDragEnd = {
                             dragEnded = true
-                            if(transposeAngle(rotationAngle.roundToInt()) !in 0..180) {
+                            if (transposeAngle(rotationAngle.roundToInt()) !in 0..180) {
                                 // Logic to avoid going oustide preffered bounds. Here I selected from 0 to 180 degrees (transposed).
                                 val distToLeft = abs(90 - rotationAngle)
                                 val distToRight = abs(270 - rotationAngle)
@@ -155,7 +170,10 @@ fun ImageRotation(
                                 } else if (rotationAngle < 0) {
                                     rotationAngle = 360 - abs(rotationAngle)
                                 }
-                                Log.i("ANGLES", "Touch angle $touchAngle, rotation angle: $rotationAngle")
+                                Log.i(
+                                    "ANGLES",
+                                    "Touch angle $touchAngle, rotation angle: $rotationAngle"
+                                )
                             }
                         }
                     )
@@ -173,28 +191,29 @@ fun ImageRotation(
             )
 
             // The cross that shrinks the Goniometer
-            crossRadius = (size.width * .10f)
+            crossRadius = (size.width * .065f)
+            crossCenter = Offset(x = size.center.x, y = size.center.y - 150)
             drawCircle(
                 Color(0xff1e4646),
                 radius = crossRadius,
-                center = size.center
+                center = crossCenter
             )
             // sin(45) = cos(45) = sqrt(2)/2
             val lineStartOffset = Offset(
-                x = size.center.x + .75f * crossRadius * sqrt(2f)/2f,
-                y = size.center.y + .75f * crossRadius * sqrt(2f)/2f
+                x = crossCenter.x + .75f * crossRadius * sqrt(2f)/2f,
+                y = crossCenter.y + .75f * crossRadius * sqrt(2f)/2f
             )
             val lineEndOffset = Offset(
-                x = size.center.x - .75f * crossRadius * sqrt(2f)/2f,
-                y = size.center.y - .75f * crossRadius * sqrt(2f)/2f
+                x = crossCenter.x - .75f * crossRadius * sqrt(2f)/2f,
+                y = crossCenter.y - .75f * crossRadius * sqrt(2f)/2f
             )
             val lineStartOffset2 = Offset(
-                x = size.center.x + .75f * crossRadius * sqrt(2f)/2f,
-                y = size.center.y + .75f * crossRadius * (-1) * sqrt(2f)/2f
+                x = crossCenter.x + .75f * crossRadius * sqrt(2f)/2f,
+                y = crossCenter.y + .75f * crossRadius * (-1) * sqrt(2f)/2f
             )
             val lineEndOffset2 = Offset(
-                x = size.center.x - .75f * crossRadius * sqrt(2f)/2f,
-                y = size.center.y - .75f * crossRadius * (-1) * sqrt(2f)/2f
+                x = crossCenter.x - .75f * crossRadius * sqrt(2f)/2f,
+                y = crossCenter.y - .75f * crossRadius * (-1) * sqrt(2f)/2f
             )
             drawLine(
                 color = Color.Cyan,
@@ -309,20 +328,53 @@ fun ImageRotation(
 fun RotationPreview() {
     var angle by remember { mutableStateOf("") }
     var rotationAngle by remember { mutableStateOf(90f) }
-    Column(Modifier.fillMaxSize()) {
-        Text(angle)
-        ImageRotation {
-            val absoluteAngle = (90 - it.roundToInt()) % 360
-            val finalAngle = if (absoluteAngle < 0) (absoluteAngle + 360) % 360 else absoluteAngle
-            rotationAngle = finalAngle.toFloat()
-            angle = finalAngle.toString() + "º (${it.roundToInt()})"
-        }
+    var isVisible by remember { mutableStateOf(true) }
+    Column(
+        Modifier.fillMaxSize()
+    ) {
         Image(
             painter = painterResource(id = R.drawable.ic_launcher_foreground),
             contentDescription = null,
-            modifier = Modifier.rotate(rotationAngle),
+            modifier = Modifier
+                .rotate(rotationAngle)
+                .align(Alignment.CenterHorizontally)
+                .size(128.dp),
             colorFilter = ColorFilter.tint(Color.Red)
         )
+        Text(angle)
+
+        Box(
+            modifier = Modifier.size(512.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            ImageRotation(
+                isVisible,
+                onCrossPressed = { isVisible = false }
+            ) {
+                val absoluteAngle = (90 - it.roundToInt()) % 360
+                val finalAngle = if (absoluteAngle < 0) (absoluteAngle + 360) % 360 else absoluteAngle
+                rotationAngle = finalAngle.toFloat()
+                angle = finalAngle.toString() + "º (${it.roundToInt()})"
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Blue),
+                horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = Color.White)
+                }
+                IconButton(onClick = { isVisible = true }) {
+                    Icon(Icons.Filled.Star, contentDescription = "Settings", tint = Color.White)
+                }
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(Icons.Filled.Menu, contentDescription = "Settings", tint = Color.White)
+                }
+            }
+        }
+
     }
 }
 
