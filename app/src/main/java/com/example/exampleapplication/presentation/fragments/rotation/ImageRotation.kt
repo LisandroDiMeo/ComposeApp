@@ -1,9 +1,14 @@
 package com.example.exampleapplication.presentation.fragments.rotation
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -41,7 +46,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-@OptIn(ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class, ExperimentalAnimationApi::class)
 @Preview(device = Devices.PIXEL_3A)
 @Composable
 fun ImageRotation(
@@ -56,6 +61,7 @@ fun ImageRotation(
     )
     val textMeasurer = rememberTextMeasurer()
     var circleRadius by remember { mutableStateOf(1f) }
+    var crossRadius by remember { mutableStateOf(1f) }
     var circleCenter by remember { mutableStateOf(Offset.Zero) }
     var dragStartedAngle by remember { mutableStateOf(0f) }
     var shouldAcceptDrag by remember { mutableStateOf(false) }
@@ -75,6 +81,7 @@ fun ImageRotation(
         }
         if (dragEnded && rotationAngle.roundToInt() !in transposedLimits) {
             val closest = closestElement(transposedLimits, rotationAngle.roundToInt())
+            // TODO: Refactor this!
             if (closest > rotationAngle){
                 while (closest > rotationAngle.roundToInt()) {
                     rotationAngle += 1
@@ -90,137 +97,190 @@ fun ImageRotation(
         }
     }
 
-    Canvas(
-        modifier = Modifier
-            .size(512.dp)
-            .pointerInput(true) {
-                detectDragGestures(
-                    onDragStart = { dragStart ->
-                        dragEnded = false
-                        shouldAcceptDrag = isOnCircle(
-                            circleCenter,
-                            dragStart,
-                            circleRadius
-                        )
-                        dragStartedAngle = atan2(
-                            y = size.center.x - dragStart.x,
-                            x = size.center.y - dragStart.y
-                        ) * (180f / Math.PI.toFloat()) * -1
-                    },
-                    onDragEnd = {
-                        dragEnded = true
-                        if (shouldAcceptDrag)
-                            oldAngle = rotationAngle
-                    },
-                    onDrag = { change, _ ->
-                        if (shouldAcceptDrag) {
-                            val touchAngle = atan2(
-                                y = size.center.x - change.position.x,
-                                x = size.center.y - change.position.y
+    var isVisible by remember { mutableStateOf(true) }
+
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = scaleIn(),
+        exit = scaleOut()
+    ) {
+        Canvas(
+            modifier = Modifier
+                .size(512.dp)
+                .pointerInput(true) {
+                    detectTapGestures(onPress = { offset ->
+                        if (isOnCircle(circleCenter, offset, crossRadius)) {
+                            isVisible = false
+                        }
+                    })
+                }
+                .pointerInput(true) {
+                    detectDragGestures(
+                        onDragStart = { dragStart ->
+                            dragEnded = false
+                            shouldAcceptDrag = isOnCircle(
+                                circleCenter,
+                                dragStart,
+                                circleRadius
+                            )
+                            dragStartedAngle = atan2(
+                                y = size.center.x - dragStart.x,
+                                x = size.center.y - dragStart.y
                             ) * (180f / Math.PI.toFloat()) * -1
-                            rotationAngle = oldAngle + (touchAngle - dragStartedAngle)
-                            if (rotationAngle > 360) {
-                                rotationAngle -= 360
-                            } else if (rotationAngle < 0) {
-                                rotationAngle = 360 - abs(rotationAngle)
+                        },
+                        onDragEnd = {
+                            dragEnded = true
+                            if (shouldAcceptDrag)
+                                oldAngle = rotationAngle
+                        },
+                        onDrag = { change, _ ->
+                            if (shouldAcceptDrag) {
+                                val touchAngle = atan2(
+                                    y = size.center.x - change.position.x,
+                                    x = size.center.y - change.position.y
+                                ) * (180f / Math.PI.toFloat()) * -1
+                                rotationAngle = oldAngle + (touchAngle - dragStartedAngle)
+                                if (rotationAngle > 360) {
+                                    rotationAngle -= 360
+                                } else if (rotationAngle < 0) {
+                                    rotationAngle = 360 - abs(rotationAngle)
+                                }
                             }
                         }
-                    }
-                )
-            }
-    ) {
-
-        // The Main Circle of the Goniometer, this radius may vary.
-        val goniometerRadius = (size.width * .5f) - (.25f * (size.width * .5f))
-        circleRadius = goniometerRadius
-        circleCenter = size.center
-        drawCircle(
-            goniometerBrush,
-            radius = goniometerRadius,
-            center = size.center
-        )
-
-        // We only need to rotate the indicators, not the circle itself.
-        // Also, we shift 180 degrees to the left
-        // in order to have 90 degrees on top at start.
-        rotate(rotationAngle - 180f, size.center) {
-            // The Angles to select
-            // Here we will use the polar system to mark each line
-            val angleUnit = 30
-            val subAngleUnit = 2
-            val anglesSeparators = 360 / angleUnit
-            val subAnglesSeparators = angleUnit / subAngleUnit
-            for (marker in 1..anglesSeparators) {
-                val angleInDegrees = angleUnit * marker
-                // A certain constant is applied to
-                // the radius in this case to make the lines cut the circle
-                // diameter.
-                val angleInRadians = Math.toRadians(angleInDegrees.toDouble())
-                val cosineOfAngle = cos(
-                    angleInRadians
-                ).toFloat()
-                val sineOfAngle = sin(
-                    angleInRadians
-                ).toFloat()
-                val startOffset = Offset(
-                    x = size.center.x + .90f * goniometerRadius * cosineOfAngle,
-                    y = size.center.y + .90f * goniometerRadius * sineOfAngle
-                )
-                val endOffset = Offset(
-                    x = size.center.x + 1.10f * goniometerRadius * cosineOfAngle,
-                    y = size.center.y + 1.10f * goniometerRadius * sineOfAngle
-                )
-                drawLine(
-                    color = Color.Gray,
-                    start = startOffset,
-                    end = endOffset,
-                    strokeWidth = 10f
-                )
-                // For similar purposes, we apply a constant to
-                // the radius here to place the text above the marker.
-                val textOffset = Offset(
-                    x = size.center.x + 1.25f * goniometerRadius * cosineOfAngle,
-                    y = size.center.y + 1.25f * goniometerRadius * sineOfAngle
-                )
-                rotate(angleInDegrees.toFloat() + 90f, textOffset) {
-                    drawText(
-                        textMeasurer = textMeasurer,
-                        text = "${angleInDegrees % 360}",
-                        topLeft = textOffset
                     )
                 }
+        ) {
 
-                for (subMarker in 1..subAnglesSeparators) {
-                    // For the sub-angle markers, we don't need need them
-                    // to cut the circle diameter, only to touch it.
-                    val subAngleInDegrees = angleInDegrees + subAngleUnit * subMarker
-                    val subAngleInRadians = Math.toRadians(subAngleInDegrees.toDouble())
-                    val cosineOfSubAngle = cos(
-                        subAngleInRadians
+            // The Main Circle of the Goniometer, this radius may vary.
+            val goniometerRadius = (size.width * .5f) - (.25f * (size.width * .5f))
+            circleRadius = goniometerRadius
+            circleCenter = size.center
+            drawCircle(
+                goniometerBrush,
+                radius = goniometerRadius,
+                center = size.center
+            )
+
+            // The cross that shrinks the Goniometer
+            crossRadius = (size.width * .10f)
+            drawCircle(
+                Color(0xff1e4646),
+                radius = crossRadius,
+                center = size.center
+            )
+            // sin(45) = cos(45) = sqrt(2)/2
+            val lineStartOffset = Offset(
+                x = size.center.x + .75f * crossRadius * sqrt(2f)/2f,
+                y = size.center.y + .75f * crossRadius * sqrt(2f)/2f
+            )
+            val lineEndOffset = Offset(
+                x = size.center.x - .75f * crossRadius * sqrt(2f)/2f,
+                y = size.center.y - .75f * crossRadius * sqrt(2f)/2f
+            )
+            val lineStartOffset2 = Offset(
+                x = size.center.x + .75f * crossRadius * sqrt(2f)/2f,
+                y = size.center.y + .75f * crossRadius * (-1) * sqrt(2f)/2f
+            )
+            val lineEndOffset2 = Offset(
+                x = size.center.x - .75f * crossRadius * sqrt(2f)/2f,
+                y = size.center.y - .75f * crossRadius * (-1) * sqrt(2f)/2f
+            )
+            drawLine(
+                color = Color.Cyan,
+                start = lineStartOffset,
+                end = lineEndOffset,
+                strokeWidth = 10f
+            )
+            drawLine(
+                color = Color.Cyan,
+                start = lineStartOffset2,
+                end = lineEndOffset2,
+                strokeWidth = 10f
+            )
+
+            // We only need to rotate the indicators, not the circle itself.
+            // Also, we shift 180 degrees to the left
+            // in order to have 90 degrees on top at start.
+            rotate(rotationAngle - 180f, size.center) {
+                // The Angles to select
+                // Here we will use the polar system to mark each line
+                val angleUnit = 30
+                val subAngleUnit = 2
+                val anglesSeparators = 360 / angleUnit
+                val subAnglesSeparators = angleUnit / subAngleUnit
+                for (marker in 1..anglesSeparators) {
+                    val angleInDegrees = angleUnit * marker
+                    // A certain constant is applied to
+                    // the radius in this case to make the lines cut the circle
+                    // diameter.
+                    val angleInRadians = Math.toRadians(angleInDegrees.toDouble())
+                    val cosineOfAngle = cos(
+                        angleInRadians
                     ).toFloat()
-                    val sineOfSubAngle = sin(
-                        subAngleInRadians
+                    val sineOfAngle = sin(
+                        angleInRadians
                     ).toFloat()
-                    val subStartOffset = Offset(
-                        x = size.center.x + .90f * goniometerRadius * cosineOfSubAngle,
-                        y = size.center.y + .90f * goniometerRadius * sineOfSubAngle
+                    val startOffset = Offset(
+                        x = size.center.x + .90f * goniometerRadius * cosineOfAngle,
+                        y = size.center.y + .90f * goniometerRadius * sineOfAngle
                     )
-                    val subEndOffset = Offset(
-                        x = size.center.x + goniometerRadius * cosineOfSubAngle,
-                        y = size.center.y + goniometerRadius * sineOfSubAngle
+                    val endOffset = Offset(
+                        x = size.center.x + 1.10f * goniometerRadius * cosineOfAngle,
+                        y = size.center.y + 1.10f * goniometerRadius * sineOfAngle
                     )
                     drawLine(
                         color = Color.Gray,
-                        start = subStartOffset,
-                        end = subEndOffset,
-                        strokeWidth = 5f
+                        start = startOffset,
+                        end = endOffset,
+                        strokeWidth = 10f
                     )
+                    // For similar purposes, we apply a constant to
+                    // the radius here to place the text above the marker.
+                    val textOffset = Offset(
+                        x = size.center.x + 1.25f * goniometerRadius * cosineOfAngle,
+                        y = size.center.y + 1.25f * goniometerRadius * sineOfAngle
+                    )
+                    rotate(angleInDegrees.toFloat() + 90f, textOffset) {
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            text = "${angleInDegrees % 360}",
+                            topLeft = textOffset
+                        )
+                    }
+
+                    for (subMarker in 1..subAnglesSeparators) {
+                        // For the sub-angle markers, we don't need need them
+                        // to cut the circle diameter, only to touch it.
+                        val subAngleInDegrees = angleInDegrees + subAngleUnit * subMarker
+                        val subAngleInRadians = Math.toRadians(subAngleInDegrees.toDouble())
+                        val cosineOfSubAngle = cos(
+                            subAngleInRadians
+                        ).toFloat()
+                        val sineOfSubAngle = sin(
+                            subAngleInRadians
+                        ).toFloat()
+                        val subStartOffset = Offset(
+                            x = size.center.x + .90f * goniometerRadius * cosineOfSubAngle,
+                            y = size.center.y + .90f * goniometerRadius * sineOfSubAngle
+                        )
+                        val subEndOffset = Offset(
+                            x = size.center.x + goniometerRadius * cosineOfSubAngle,
+                            y = size.center.y + goniometerRadius * sineOfSubAngle
+                        )
+                        drawLine(
+                            color = Color.Gray,
+                            start = subStartOffset,
+                            end = subEndOffset,
+                            strokeWidth = 5f
+                        )
+                    }
                 }
             }
+
+
         }
-
-
     }
+
 
 }
 
