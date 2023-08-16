@@ -8,14 +8,20 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -38,6 +44,7 @@ import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
@@ -45,8 +52,10 @@ import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import com.example.exampleapplication.R
@@ -54,7 +63,6 @@ import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
-import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -65,6 +73,8 @@ import kotlin.math.sqrt
 @Composable
 fun ImageRotation(
     isVisible: Boolean = true,
+    canvasHeight: Dp = 512.dp,
+    offsetY: Dp = 212.dp,
     onCrossPressed: () -> Unit = {},
     onAngleChanged: (Float) -> Unit = {
         Log.i("IMAGE_ROTATE", it.toString())
@@ -96,7 +106,7 @@ fun ImageRotation(
         if (dragEnded && rotationAngle.roundToInt() !in transposedLimits) {
             val closest = closestElement(transposedLimits, rotationAngle.roundToInt())
             // TODO: Refactor this!
-            if (closest > rotationAngle){
+            if (closest > rotationAngle) {
                 while (closest > rotationAngle.roundToInt()) {
                     rotationAngle += 1
                     delay(75L)
@@ -111,16 +121,26 @@ fun ImageRotation(
         }
     }
 
-//    var isVisible by remember { mutableStateOf(true) }
-
     AnimatedVisibility(
         visible = isVisible,
-        enter = scaleIn(),
-        exit = scaleOut()
+        enter = scaleIn(
+            transformOrigin = TransformOrigin(
+                TransformOrigin.Center.pivotFractionX,
+                TransformOrigin.Center.pivotFractionY + .5f
+            )
+        ),
+        exit = scaleOut(
+            transformOrigin = TransformOrigin(
+                TransformOrigin.Center.pivotFractionX,
+                TransformOrigin.Center.pivotFractionY + .5f
+            )
+        )
     ) {
         Canvas(
             modifier = Modifier
-                .size(512.dp)
+                .fillMaxWidth()
+                .height(canvasHeight)
+                .offset(y = offsetY)
                 .pointerInput(true) {
                     detectTapGestures(onPress = { offset ->
                         if (isOnCircle(crossCenter, offset, crossRadius)) {
@@ -200,20 +220,20 @@ fun ImageRotation(
             )
             // sin(45) = cos(45) = sqrt(2)/2
             val lineStartOffset = Offset(
-                x = crossCenter.x + .75f * crossRadius * sqrt(2f)/2f,
-                y = crossCenter.y + .75f * crossRadius * sqrt(2f)/2f
+                x = crossCenter.x + .75f * crossRadius * sqrt(2f) / 2f,
+                y = crossCenter.y + .75f * crossRadius * sqrt(2f) / 2f
             )
             val lineEndOffset = Offset(
-                x = crossCenter.x - .75f * crossRadius * sqrt(2f)/2f,
-                y = crossCenter.y - .75f * crossRadius * sqrt(2f)/2f
+                x = crossCenter.x - .75f * crossRadius * sqrt(2f) / 2f,
+                y = crossCenter.y - .75f * crossRadius * sqrt(2f) / 2f
             )
             val lineStartOffset2 = Offset(
-                x = crossCenter.x + .75f * crossRadius * sqrt(2f)/2f,
-                y = crossCenter.y + .75f * crossRadius * (-1) * sqrt(2f)/2f
+                x = crossCenter.x + .75f * crossRadius * sqrt(2f) / 2f,
+                y = crossCenter.y + .75f * crossRadius * (-1) * sqrt(2f) / 2f
             )
             val lineEndOffset2 = Offset(
-                x = crossCenter.x - .75f * crossRadius * sqrt(2f)/2f,
-                y = crossCenter.y - .75f * crossRadius * (-1) * sqrt(2f)/2f
+                x = crossCenter.x - .75f * crossRadius * sqrt(2f) / 2f,
+                y = crossCenter.y - .75f * crossRadius * (-1) * sqrt(2f) / 2f
             )
             drawLine(
                 color = Color.Cyan,
@@ -245,7 +265,8 @@ fun ImageRotation(
                     // diameter.
                     val angleInRadians = Math.toRadians(angleInDegrees.toDouble())
                     val textAngleAdjust = if (angleInDegrees == 360) 1 else 3
-                    val textAngleInRadians = Math.toRadians(angleInDegrees.toDouble() - textAngleAdjust)
+                    val textAngleInRadians =
+                        Math.toRadians(angleInDegrees.toDouble() - textAngleAdjust)
                     val cosineOfAngle = cos(
                         angleInRadians
                     ).toFloat()
@@ -330,7 +351,8 @@ fun RotationPreview() {
     var rotationAngle by remember { mutableStateOf(90f) }
     var isVisible by remember { mutableStateOf(true) }
     Column(
-        Modifier.fillMaxSize()
+        Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center
     ) {
         Image(
             painter = painterResource(id = R.drawable.ic_launcher_foreground),
@@ -341,30 +363,47 @@ fun RotationPreview() {
                 .size(128.dp),
             colorFilter = ColorFilter.tint(Color.Red)
         )
-        Text(angle)
-
-        Box(
-            modifier = Modifier.size(512.dp),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Bottom
         ) {
-            ImageRotation(
-                isVisible,
-                onCrossPressed = { isVisible = false }
-            ) {
-                val absoluteAngle = (90 - it.roundToInt()) % 360
-                val finalAngle = if (absoluteAngle < 0) (absoluteAngle + 360) % 360 else absoluteAngle
-                rotationAngle = finalAngle.toFloat()
-                angle = finalAngle.toString() + "º (${it.roundToInt()})"
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    angle,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                ImageRotation(
+                    isVisible,
+                    canvasHeight = 412.dp,
+                    onCrossPressed = { isVisible = false }
+                ) {
+                    val absoluteAngle = (90 - it.roundToInt()) % 360
+                    val finalAngle =
+                        if (absoluteAngle < 0) (absoluteAngle + 360) % 360 else absoluteAngle
+                    rotationAngle = finalAngle.toFloat()
+                    angle = finalAngle.toString() + "º (${it.roundToInt()})"
+                }
             }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.Blue),
-                horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally),
+                    .background(Color.Blue)
+                    .clickable { /*Little hack to avoid drag events on this row.*/ }
+                ,
+                horizontalArrangement = Arrangement.spacedBy(
+                    32.dp,
+                    Alignment.CenterHorizontally
+                ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { /*TODO*/ }) {
-                    Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = Color.White)
+                    Icon(
+                        Icons.Filled.Settings,
+                        contentDescription = "Settings",
+                        tint = Color.White
+                    )
                 }
                 IconButton(onClick = { isVisible = true }) {
                     Icon(Icons.Filled.Star, contentDescription = "Settings", tint = Color.White)
@@ -374,6 +413,7 @@ fun RotationPreview() {
                 }
             }
         }
+
 
     }
 }
@@ -391,7 +431,7 @@ private fun transposeAngle(angle: Int): Int {
     return if (x < 0) x + 360 else x
 }
 
-fun closestElement(l: List<Int>, k: Int): Int{
+fun closestElement(l: List<Int>, k: Int): Int {
     var closestElement = l[0]
     var closestDifference = abs(l[0] - k)
 
