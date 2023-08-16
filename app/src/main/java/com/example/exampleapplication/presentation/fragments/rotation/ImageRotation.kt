@@ -225,7 +225,8 @@ fun ImageRotation(
                     // the radius in this case to make the lines cut the circle
                     // diameter.
                     val angleInRadians = Math.toRadians(angleInDegrees.toDouble())
-                    val textAngleInRadians = Math.toRadians(angleInDegrees.toDouble() - 3)
+                    val textAngleAdjust = if (angleInDegrees == 360) 1 else 3
+                    val textAngleInRadians = Math.toRadians(angleInDegrees.toDouble() - textAngleAdjust)
                     val cosineOfAngle = cos(
                         angleInRadians
                     ).toFloat()
