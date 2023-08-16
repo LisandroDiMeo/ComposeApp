@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Devices
@@ -224,11 +225,18 @@ fun ImageRotation(
                     // the radius in this case to make the lines cut the circle
                     // diameter.
                     val angleInRadians = Math.toRadians(angleInDegrees.toDouble())
+                    val textAngleInRadians = Math.toRadians(angleInDegrees.toDouble() - 3)
                     val cosineOfAngle = cos(
                         angleInRadians
                     ).toFloat()
                     val sineOfAngle = sin(
                         angleInRadians
+                    ).toFloat()
+                    val cosineOfTextAngle = cos(
+                        textAngleInRadians
+                    ).toFloat()
+                    val sineOfTextAngle = sin(
+                        textAngleInRadians
                     ).toFloat()
                     val startOffset = Offset(
                         x = size.center.x + .90f * goniometerRadius * cosineOfAngle,
@@ -247,14 +255,15 @@ fun ImageRotation(
                     // For similar purposes, we apply a constant to
                     // the radius here to place the text above the marker.
                     val textOffset = Offset(
-                        x = size.center.x + 1.25f * goniometerRadius * cosineOfAngle,
-                        y = size.center.y + 1.25f * goniometerRadius * sineOfAngle
+                        x = size.center.x + 1.25f * goniometerRadius * cosineOfTextAngle,
+                        y = size.center.y + 1.25f * goniometerRadius * sineOfTextAngle
                     )
                     rotate(angleInDegrees.toFloat() + 90f, textOffset) {
                         drawText(
                             textMeasurer = textMeasurer,
                             text = "${angleInDegrees % 360}",
-                            topLeft = textOffset
+                            topLeft = textOffset,
+                            style = TextStyle()
                         )
                     }
 
