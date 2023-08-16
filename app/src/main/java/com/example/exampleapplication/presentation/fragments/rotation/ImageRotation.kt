@@ -41,6 +41,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -75,10 +76,7 @@ fun ImageRotation(
         onAngleChanged(rotationAngle)
     }
     LaunchedEffect(dragEnded) {
-        val transposedLimits = limits.map {
-            val x = (90 - it) % 360
-            if (x < 0) x + 360 else x
-        }
+        val transposedLimits = limits.map { transposeAngle(it) }
         if (dragEnded && rotationAngle.roundToInt() !in transposedLimits) {
             val closest = closestElement(transposedLimits, rotationAngle.roundToInt())
             // TODO: Refactor this!
@@ -130,11 +128,22 @@ fun ImageRotation(
                         },
                         onDragEnd = {
                             dragEnded = true
+                            if(transposeAngle(rotationAngle.roundToInt()) !in 0..180) {
+                                // Logic to avoid going oustide preffered bounds. Here I selected from 0 to 180 degrees (transposed).
+                                val distToLeft = abs(90 - rotationAngle)
+                                val distToRight = abs(270 - rotationAngle)
+                                rotationAngle = if (distToLeft < distToRight) {
+                                    90f
+                                } else {
+                                    270f
+                                }
+                            }
+
                             if (shouldAcceptDrag)
                                 oldAngle = rotationAngle
                         },
                         onDrag = { change, _ ->
-                            if (shouldAcceptDrag) {
+                            if (shouldAcceptDrag && transposeAngle(rotationAngle.roundToInt()) in 0..180) {
                                 val touchAngle = atan2(
                                     y = size.center.x - change.position.x,
                                     x = size.center.y - change.position.y
@@ -145,6 +154,7 @@ fun ImageRotation(
                                 } else if (rotationAngle < 0) {
                                     rotationAngle = 360 - abs(rotationAngle)
                                 }
+                                Log.i("ANGLES", "Touch angle $touchAngle, rotation angle: $rotationAngle")
                             }
                         }
                     )
@@ -312,6 +322,11 @@ private fun isOnCircle(circleCenter: Offset, point: Offset, radius: Float): Bool
     ) <= radius
     Log.i("MATH", "Is $point on circle with center $circleCenter and r=$radius? $isOnCircle")
     return isOnCircle
+}
+
+private fun transposeAngle(angle: Int): Int {
+    val x = (90 - angle) % 360
+    return if (x < 0) x + 360 else x
 }
 
 fun closestElement(l: List<Int>, k: Int): Int{
