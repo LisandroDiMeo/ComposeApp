@@ -47,24 +47,9 @@ fun BrightnessSelector(
     brightness: Float = .5f,
     onBrightnessChanged: (Float) -> Unit = {}
 ) {
-//    var brightness by remember { mutableStateOf(.5f) }
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     LaunchedEffect(brightness) {
         onBrightnessChanged(brightness)
     }
-//    Column(
-//        modifier = Modifier
-//            .background(Color.Black)
-//            .fillMaxSize()
-//            .padding(16.dp)
-//            .pointerInput(true) {
-//                detectHorizontalDragGestures { change, _ ->
-//                    brightness = change.position.x / screenWidth.toPx()
-//                }
-//            }
-//    ) {
-//
-//    }
     Slider(
         value = brightness,
         onValueChange = {
