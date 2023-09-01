@@ -49,7 +49,7 @@ import kotlin.math.sqrt
 fun ImageRotation(
     isVisible: Boolean = true,
     canvasHeight: Dp = 512.dp,
-    offsetY: Dp = 212.dp,
+    offsetY: Dp = 0.dp,
     onCrossPressed: () -> Unit = {},
     onAngleChanged: (Float) -> Unit = {
         Log.i("IMAGE_ROTATE", it.toString())
@@ -139,32 +139,23 @@ fun ImageRotation(
                         },
                         onDragEnd = {
                             dragEnded = true
-                            if (transposeAngle(rotationAngle.roundToInt()) !in 0..180) {
-                                // Logic to avoid going oustide preffered bounds. Here I selected from 0 to 180 degrees (transposed).
-                                val distToLeft = abs(90 - rotationAngle)
-                                val distToRight = abs(270 - rotationAngle)
-                                rotationAngle = if (distToLeft < distToRight) {
-                                    90f
-                                } else {
-                                    270f
-                                }
-                            }
 
                             if (shouldAcceptDrag)
                                 oldAngle = rotationAngle
                         },
                         onDrag = { change, _ ->
-                            if (shouldAcceptDrag && transposeAngle(rotationAngle.roundToInt()) in 0..180) {
+                            if (shouldAcceptDrag) {
                                 val touchAngle = atan2(
                                     y = size.center.x - change.position.x,
                                     x = size.center.y - change.position.y
                                 ) * (180f / Math.PI.toFloat()) * -1
-                                rotationAngle = oldAngle + (touchAngle - dragStartedAngle)
-                                if (rotationAngle > 360) {
-                                    rotationAngle -= 360
-                                } else if (rotationAngle < 0) {
-                                    rotationAngle = 360 - abs(rotationAngle)
+                                var nextAngle = oldAngle + (touchAngle - dragStartedAngle)
+                                if (nextAngle > 360) {
+                                    nextAngle -= 360
+                                } else if (nextAngle < 0) {
+                                    nextAngle = 360 - abs(nextAngle)
                                 }
+                                rotationAngle = nextAngle
                                 Log.i(
                                     "ANGLES",
                                     "Touch angle $touchAngle, rotation angle: $rotationAngle"
@@ -226,7 +217,7 @@ fun ImageRotation(
             // We only need to rotate the indicators, not the circle itself.
             // Also, we shift 180 degrees to the left
             // in order to have 90 degrees on top at start.
-            rotate(rotationAngle - 180f, size.center) {
+            rotate(rotationAngle - 0f, size.center) {
                 // The Angles to select
                 // Here we will use the polar system to mark each line
                 val angleUnit = 30
@@ -239,7 +230,7 @@ fun ImageRotation(
                     // the radius in this case to make the lines cut the circle
                     // diameter.
                     val angleInRadians = Math.toRadians(angleInDegrees.toDouble())
-                    val textAngleAdjust = if (angleInDegrees == 360) 1 else 3
+                    val textAngleAdjust = if (angleInDegrees == 360) -1 else -3
                     val textAngleInRadians =
                         Math.toRadians(angleInDegrees.toDouble() - textAngleAdjust)
                     val cosineOfAngle = cos(
@@ -256,11 +247,11 @@ fun ImageRotation(
                     ).toFloat()
                     val startOffset = Offset(
                         x = size.center.x + .90f * goniometerRadius * cosineOfAngle,
-                        y = size.center.y + .90f * goniometerRadius * sineOfAngle
+                        y = size.center.y - .90f * goniometerRadius * sineOfAngle
                     )
                     val endOffset = Offset(
                         x = size.center.x + 1.10f * goniometerRadius * cosineOfAngle,
-                        y = size.center.y + 1.10f * goniometerRadius * sineOfAngle
+                        y = size.center.y - 1.10f * goniometerRadius * sineOfAngle
                     )
                     drawLine(
                         color = Color.Gray,
@@ -272,14 +263,14 @@ fun ImageRotation(
                     // the radius here to place the text above the marker.
                     val textOffset = Offset(
                         x = size.center.x + 1.25f * goniometerRadius * cosineOfTextAngle,
-                        y = size.center.y + 1.25f * goniometerRadius * sineOfTextAngle
+                        y = size.center.y - 1.25f * goniometerRadius * sineOfTextAngle
                     )
-                    rotate(angleInDegrees.toFloat() + 90f, textOffset) {
+                    rotate(360f - angleInDegrees.toFloat() + 90f, textOffset) {
                         drawText(
                             textMeasurer = textMeasurer,
                             text = "${angleInDegrees % 360}",
                             topLeft = textOffset,
-                            style = TextStyle(color = Color.White)
+                            style = TextStyle(color = Color.Black)
                         )
                     }
 
@@ -296,11 +287,11 @@ fun ImageRotation(
                         ).toFloat()
                         val subStartOffset = Offset(
                             x = size.center.x + .90f * goniometerRadius * cosineOfSubAngle,
-                            y = size.center.y + .90f * goniometerRadius * sineOfSubAngle
+                            y = size.center.y - .90f * goniometerRadius * sineOfSubAngle
                         )
                         val subEndOffset = Offset(
                             x = size.center.x + goniometerRadius * cosineOfSubAngle,
-                            y = size.center.y + goniometerRadius * sineOfSubAngle
+                            y = size.center.y - goniometerRadius * sineOfSubAngle
                         )
                         drawLine(
                             color = Color.Gray,

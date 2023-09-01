@@ -1,6 +1,5 @@
 package com.example.exampleapplication.presentation.navigation
 
-import android.text.TextUtils
 import androidx.lifecycle.ViewModel
 import com.example.common.ui.topappbar.ScreenModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +13,6 @@ class MainNavigationViewModel : ViewModel() {
 
     fun updateTopBarWithScreen(screen: ScreenModel) {
         _screen.value = screen
-        TextUtils.isEmpty("")
     }
 
 }

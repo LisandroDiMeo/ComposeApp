@@ -12,8 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
-import com.example.common.ui.topappbar.TopAppBarAction
 import com.example.common.ui.topappbar.ScreenModel
+import com.example.common.ui.topappbar.TopAppBarAction
 
 class LogInScreenModel(
     private val actions: LogInScreenActions,

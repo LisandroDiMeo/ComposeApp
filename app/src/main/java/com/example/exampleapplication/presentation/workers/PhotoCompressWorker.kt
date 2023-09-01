@@ -9,7 +9,6 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okio.ByteString.Companion.toByteString
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.roundToInt

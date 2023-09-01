@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavHostController
-import com.example.exampleapplication.presentation.chronometer.Chronometer
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class SessionExpirationObserver(
